@@ -31,7 +31,10 @@ This plugin adds multilevel dependent variation handling to WooCommerce variable
 
 - The script only loads on **variable product** pages and uses the standard WooCommerce variation form (`.variations_form`).
 - No template overrides are required. The plugin relies on WooCommerce's built-in variation data to decide when to show or hide child attributes.
-- Tested with **Variation Swatches for WooCommerce by CartFlows**. Swatch wrappers for an attribute hide and re-enable alongside the underlying select, and the plugin auto-selects single available swatch options just like dropdowns.
+- Tested with **Variation Swatches for WooCommerce by CartFlows**.
+  - When CartFlows swatches are active, only the first attribute is shown at first.
+  - Choosing the *first* value (e.g., "Basic") auto-selects the first subvariation, hides the rest of the subvariation levels, and keeps swatches and selects in sync.
+  - Choosing the *second* value (e.g., "Advanced") hides the first subvariation option, reveals the remaining subvariation swatches/options, and clears any previously auto-selected child values.
 
 ## Troubleshooting
 

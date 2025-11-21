@@ -45,7 +45,65 @@ if ( ! class_exists( 'WC_Dependable_Variations' ) ) {
                 true
             );
 
+            $data = array(
+                'cartflows_swatches_active' => self::is_cartflows_swatches_active(),
+            );
+
+            wp_localize_script( $handle, 'wcDependableVariationsData', $data );
+
             wp_enqueue_script( $handle );
+        }
+
+        /**
+         * Try to detect if Variation Swatches for WooCommerce by CartFlows is active.
+         *
+         * This intentionally checks multiple plugin signatures to remain resilient to
+         * different install paths or editions.
+         *
+         * @return bool
+         */
+        private static function is_cartflows_swatches_active() {
+            $signatures = array(
+                'CFVSW_VERSION',
+                'CFVSW_PLUGIN_FILE',
+            );
+
+            foreach ( $signatures as $signature ) {
+                if ( defined( $signature ) ) {
+                    return true;
+                }
+            }
+
+            $classes = array(
+                'CFVSW',
+                'CFVSW_Public',
+                'Cartflows_Variation_Swatches',
+            );
+
+            foreach ( $classes as $class ) {
+                if ( class_exists( $class ) ) {
+                    return true;
+                }
+            }
+
+            if ( ! function_exists( 'is_plugin_active' ) ) {
+                include_once ABSPATH . 'wp-admin/includes/plugin.php';
+            }
+
+            if ( function_exists( 'is_plugin_active' ) ) {
+                $plugins = array(
+                    'woo-variation-swatches/woo-variation-swatches.php',
+                    'variation-swatches-woo/variation-swatches-woo.php',
+                );
+
+                foreach ( $plugins as $plugin ) {
+                    if ( is_plugin_active( $plugin ) ) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 
