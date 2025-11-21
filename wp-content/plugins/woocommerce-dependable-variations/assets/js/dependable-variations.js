@@ -23,6 +23,19 @@
                 })
                 .get();
 
+            const controls = attributeNames.map((attributeName, index) => {
+                const $select = $selects.eq(index);
+                const $swatches = $form.find(
+                    `.cfvsw-swatches[data-attribute_name="${attributeName}"], .cfvsw-swatches[data-attribute-name="${attributeName}"]`
+                );
+
+                return {
+                    attributeName,
+                    $select,
+                    $swatches,
+                };
+            });
+
             const matchVariations = (criteria) =>
                 variations.filter((variation) =>
                     Object.entries(criteria).every(([key, value]) => {
@@ -54,17 +67,32 @@
                 return Array.from(values);
             };
 
-            const toggleRow = ($select, visible) => {
+            const toggleControl = (control, visible) => {
+                const { $select, $swatches } = control;
                 const $row = $select.closest('tr');
                 const $wrapper = $row.length ? $row : $select.closest('.form-row');
 
                 $wrapper[visible ? 'show' : 'hide']();
                 $select.prop('disabled', !visible);
+
+                if ($swatches.length) {
+                    $swatches[visible ? 'show' : 'hide']();
+                    $swatches.find('input, button, select, option').prop('disabled', !visible);
+                }
             };
 
-            const resetSelect = ($select, value = undefined) => {
+            const setSelectValue = ($select, value = undefined, triggerChange = false) => {
                 const fallback = $select.find('option').first().val();
-                $select.val(value ?? fallback);
+                const nextValue = value ?? fallback;
+                const previous = $select.val();
+
+                $select.val(nextValue);
+
+                if (triggerChange && previous !== nextValue) {
+                    $select.trigger('change');
+                } else if (triggerChange) {
+                    $select.trigger('change');
+                }
             };
 
             const getPriorCriteria = (criteria, index) =>
@@ -93,9 +121,8 @@
             const updateVisibility = () => {
                 const criteria = {};
 
-                $selects.each(function (index) {
-                    const $select = $(this);
-                    const attributeName = attributeNames[index];
+                controls.forEach((control, index) => {
+                    const { attributeName, $select } = control;
                     const priorCriteria = getPriorCriteria(criteria, index);
                     const matchedVariations = matchVariations(priorCriteria);
                     const candidates = uniqueValues(matchedVariations, attributeName);
@@ -103,13 +130,13 @@
 
                     if (!visible) {
                         const autoValue = candidates.length === 1 ? candidates[0] : '';
-                        resetSelect($select, autoValue);
-                        criteria[attributeName] = autoValue;
+                        setSelectValue($select, autoValue, true);
+                        criteria[attributeName] = $select.val();
                     } else {
                         criteria[attributeName] = $select.val();
                     }
 
-                    toggleRow($select, visible);
+                    toggleControl(control, visible);
                 });
 
                 $form.trigger('woocommerce_variation_select_change');
@@ -120,10 +147,15 @@
                 const index = $selects.index(this);
 
                 $selects.slice(index + 1).each(function () {
-                    resetSelect($(this));
+                    setSelectValue($(this), undefined, true);
                 });
 
                 updateVisibility();
+            });
+
+            $form.on('click.wc-dependable-variations', '.cfvsw-swatches .cfvsw-swatches-option', function () {
+                // Allow the swatch script to sync the hidden select first.
+                setTimeout(updateVisibility, 0);
             });
 
             updateVisibility();
