@@ -15,6 +15,19 @@
     return $select.closest('tr').length ? $select.closest('tr') : $select.closest('.woocommerce-variation, .form-row, p');
   }
 
+  function setFoundVariation($form, variation) {
+    var $variationInput = $form.find('input.variation_id');
+
+    if (!variation) {
+      $variationInput.val('');
+      $form.trigger('reset_data');
+      return;
+    }
+
+    $variationInput.val(variation.variation_id);
+    $form.trigger('found_variation', [variation]);
+  }
+
   $(function () {
     $('.variations_form').each(function () {
       var $form = $(this);
@@ -84,6 +97,7 @@
 
       function updateDependents(primaryValue) {
         if (!primaryValue) {
+          setFoundVariation($form, null);
           toggleDependents(false);
           return;
         }
@@ -91,9 +105,12 @@
         var matchingVariations = getMatchingVariations(primaryValue);
 
         if (!matchingVariations.length) {
+          setFoundVariation($form, null);
           toggleDependents(false);
           return;
         }
+
+        var hasActiveDependents = false;
 
         $dependents.each(function () {
           var $select = $(this);
@@ -113,7 +130,25 @@
 
           getClosestRow($select).removeClass('wdv-hidden');
           restrictOptions($select, allowedValues);
+          hasActiveDependents = true;
         });
+
+        if (!hasActiveDependents) {
+          var singleLevelVariations = matchingVariations.filter(function (variation) {
+            return $dependents.toArray().every(function (select) {
+              var attributeName = getAttributeName($(select));
+              var value = variation.attributes[attributeName];
+              return value === '' || value === null || value === undefined;
+            });
+          });
+
+          if (singleLevelVariations.length === 1) {
+            setFoundVariation($form, singleLevelVariations[0]);
+            return;
+          }
+        }
+
+        setFoundVariation($form, null);
       }
 
       $primary.on('change', function () {
