@@ -1,8 +1,0 @@
-.wdv-hidden {
-  display: none !important;
-}
-
-.variations_form .wdv-hidden select,
-.variations_form .wdv-hidden .select2-selection {
-  pointer-events: none;
-}

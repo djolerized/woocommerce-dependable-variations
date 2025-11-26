@@ -1,0 +1,12 @@
+.wccv-hidden {
+  display: none !important;
+}
+
+.wccv-inline-error {
+  color: #b81c23;
+  margin: 0.5em 0;
+}
+
+.wccv-inline-error:empty {
+  display: none;
+}
